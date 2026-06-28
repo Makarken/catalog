@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#14161a">
+<title>Каталог · Resale Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root[data-theme="dark"]{
+  --bg:#14161a;--bg2:#1a1e23;--card:#1d2127;--card2:#242931;
+  --line-s:#323841;--ink:#eef0ec;--ink-d:#a7ada5;--mut:#6f756e;
+  --gold:#9ec19a;--gold-d:#86ab83;--red:#e0938a;--on-gold:#1a1f1a;
+  --shadow:0 16px 40px -20px rgba(0,0,0,.7);--chk:#262b32;
+}
+:root[data-theme="light"]{
+  --bg:#f1f0ea;--bg2:#e8e7df;--card:#fcfbf7;--card2:#f2f1ea;
+  --line-s:#dad9cf;--ink:#1f211c;--ink-d:#535852;--mut:#838880;
+  --gold:#5c8159;--gold-d:#4a6c47;--red:#bd5d4f;--on-gold:#ffffff;
+  --shadow:0 14px 36px -22px rgba(50,55,40,.22);--chk:#e7e6dd;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Inter",system-ui,sans-serif;font-size:15px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 70px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:9px}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 22%,transparent)}
+.brand span{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+.theme{display:flex;border:1px solid var(--line-s);border-radius:30px;padding:3px;background:var(--card)}
+.theme button{font-family:"IBM Plex Mono",monospace;font-size:11px;border:none;background:none;color:var(--mut);padding:6px 11px;border-radius:24px;cursor:pointer}
+.theme button.on{background:var(--gold);color:var(--on-gold);font-weight:500}
+h1{font-family:"Archivo",sans-serif;font-weight:800;font-size:clamp(28px,7vw,40px);margin:6px 0 4px;letter-spacing:-.01em}
+.lede{color:var(--ink-d);font-size:14px;margin:0 0 20px}
+
+/* экран входа */
+.gate{border:1px solid var(--line-s);border-radius:16px;background:var(--card);padding:22px;box-shadow:var(--shadow);max-width:380px}
+.gate h3{font-family:"Archivo";font-weight:700;font-size:18px;margin:0 0 6px}
+.gate p{color:var(--ink-d);font-size:13px;margin:0 0 14px}
+.gate input{width:100%;font-family:"IBM Plex Mono",monospace;font-size:15px;padding:12px;border-radius:11px;border:1.5px solid var(--line-s);background:var(--card2);color:var(--ink);outline:none;margin-bottom:6px}
+.gate input:focus{border-color:var(--gold)}
+.gate .err{color:var(--red);font-size:12px;min-height:16px;font-family:"IBM Plex Mono",monospace}
+.btn{font-family:"Inter";font-weight:600;font-size:14px;border:1px solid var(--line-s);background:var(--card);color:var(--ink);padding:12px 16px;border-radius:11px;cursor:pointer;transition:.15s}
+.btn:hover{border-color:var(--gold-d)}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:var(--on-gold);width:100%}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+/* сетка баз */
+.bases{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.base-card{border:1px solid var(--line-s);border-radius:16px;background:var(--card);padding:18px;cursor:pointer;transition:.18s;box-shadow:var(--shadow);text-align:left}
+.base-card:hover{border-color:var(--gold-d);transform:translateY(-2px)}
+.base-card .letter{font-family:"Archivo";font-weight:800;font-size:34px;color:var(--gold);line-height:1}
+.base-card .name{font-weight:600;font-size:15px;margin-top:8px}
+.base-card .cnt{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--mut);margin-top:2px}
+
+/* список позиций */
+.crumb{display:flex;align-items:center;gap:8px;margin-bottom:16px;font-family:"IBM Plex Mono",monospace;font-size:13px}
+.crumb button{background:none;border:none;color:var(--gold);cursor:pointer;font:inherit;padding:0}
+.crumb span{color:var(--mut)}
+.pos-list{display:flex;flex-direction:column;gap:11px}
+.pos{border:1px solid var(--line-s);border-radius:14px;background:var(--card);padding:12px;display:flex;gap:12px;cursor:pointer;transition:.15s}
+.pos:hover{border-color:var(--gold-d)}
+.pos .pv{flex:none;width:74px;height:74px;border-radius:10px;overflow:hidden;background:var(--card2);border:1px solid var(--line-s)}
+.pos .pv img{width:100%;height:100%;object-fit:cover;display:block}
+.pos .info{flex:1;min-width:0}
+.pos .id{font-family:"Archivo";font-weight:700;font-size:17px}
+.pos .dsc{color:var(--ink-d);font-size:13px;margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pos .tags{display:flex;gap:6px;margin-top:7px}
+.tag{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:3px 8px;border-radius:20px;background:var(--card2);color:var(--mut)}
+.tag.g{background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--gold-d)}
+
+/* детали позиции */
+.detail h2{font-family:"Archivo";font-weight:800;font-size:26px;margin:0 0 4px}
+.detail .desc{background:var(--card);border:1px solid var(--line-s);border-radius:12px;padding:14px;font-size:14px;color:var(--ink-d);white-space:pre-wrap;margin:14px 0;line-height:1.55}
+.sect-h{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.gal a{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--line-s);aspect-ratio:1;display:block;background:var(--card2)}
+.gal img{width:100%;height:100%;object-fit:cover;display:block}
+.gal .dl{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-family:"IBM Plex Mono",monospace;font-size:10px;text-align:center;padding:3px}
+
+.state{text-align:center;padding:50px 20px;color:var(--mut);font-family:"IBM Plex Mono",monospace;font-size:13px}
+.spinner{width:30px;height:30px;border:3px solid var(--line-s);border-top-color:var(--gold);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.foot{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--mut);text-align:center;margin-top:30px}
+.hidden{display:none}
+@media(max-width:480px){.bases{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><div class="dot"></div><span>resale · каталог</span></div>
+    <div class="theme" id="theme">
+      <button data-t="dark" class="on">Тёмная</button>
+      <button data-t="light">Светлая</button>
+    </div>
+  </div>
+
+  <!-- ЭКРАН ВХОДА -->
+  <div id="gateScreen">
+    <h1>Каталог позиций</h1>
+    <p class="lede">Фото и описания всех баз. Введи пароль доступа.</p>
+    <div class="gate">
+      <h3>Доступ</h3>
+      <p>Адрес Worker и пароль выдаёт владелец. Сохранятся на этом устройстве.</p>
+      <input type="text" id="apiInput" placeholder="https://...workers.dev" autocomplete="off" autocapitalize="off">
+      <input type="password" id="tokenInput" placeholder="пароль" autocomplete="off">
+      <div class="err" id="gateErr"></div>
+      <button class="btn primary" id="gateBtn">Войти</button>
+    </div>
+  </div>
+
+  <!-- КОНТЕНТ -->
+  <div id="content" class="hidden"></div>
+
+  <p class="foot">resale studio · каталог v1</p>
+</div>
+
+<script type="module">
+const $=id=>document.getElementById(id);
+const store={get:k=>{try{return localStorage.getItem('cat_'+k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem('cat_'+k,v)}catch(e){}}};
+
+/* тема */
+const themeBox=$('theme');
+function applyTheme(t){document.documentElement.dataset.theme=t;themeBox.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));store.set('theme',t);document.querySelector('meta[name=theme-color]').setAttribute('content',t==='dark'?'#14161a':'#f1f0ea');}
+themeBox.querySelectorAll('button').forEach(b=>b.onclick=()=>applyTheme(b.dataset.t));
+applyTheme(store.get('theme')||'dark');
+
+let API=store.get('api')||'';
+let TOKEN=store.get('token')||'';
+const content=$('content'),gate=$('gateScreen');
+
+function api(path){
+  const sep=path.includes('?')?'&':'?';
+  return `${API.replace(/\/$/,'')}${path}${sep}token=${encodeURIComponent(TOKEN)}`;
+}
+function fileUrl(key){return `${API.replace(/\/$/,'')}/file?key=${encodeURIComponent(key)}`;}
+
+/* вход */
+$('gateBtn').onclick=tryLogin;
+$('tokenInput').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin();});
+async function tryLogin(){
+  API=$('apiInput').value.trim();TOKEN=$('tokenInput').value.trim();
+  $('gateErr').textContent='';
+  if(!API||!TOKEN){$('gateErr').textContent='Заполни адрес и пароль';return;}
+  $('gateBtn').disabled=true;$('gateBtn').textContent='Проверяю…';
+  try{
+    const r=await fetch(api('/bases'));
+    if(r.status===401){throw new Error('Неверный пароль');}
+    if(!r.ok)throw new Error('Worker недоступен');
+    store.set('api',API);store.set('token',TOKEN);
+    showBases();
+  }catch(e){$('gateErr').textContent=String(e.message||e);}
+  $('gateBtn').disabled=false;$('gateBtn').textContent='Войти';
+}
+
+/* если уже залогинен */
+if(API&&TOKEN){gate.classList.add('hidden');content.classList.remove('hidden');showBases();}
+
+function loading(msg){content.innerHTML=`<div class="state"><div class="spinner"></div>${msg||'Загрузка…'}</div>`;}
+function showError(msg){content.innerHTML=`<div class="state">⚠ ${msg}</div>`;}
+
+/* экран баз */
+async function showBases(){
+  gate.classList.add('hidden');content.classList.remove('hidden');
+  loading('Загружаю базы…');
+  try{
+    const r=await fetch(api('/bases'));const d=await r.json();
+    let html=`<h1>Базы</h1><p class="lede">Нажми на базу, чтобы открыть позиции.</p><div class="bases">`;
+    for(const b of d.bases){
+      html+=`<button class="base-card" data-base="${b.base}">
+        <div class="letter">${b.base}</div>
+        <div class="name">${b.label}</div>
+        <div class="cnt">${b.count} ${plural(b.count)}</div>
+      </button>`;
+    }
+    html+=`</div>`;content.innerHTML=html;
+    content.querySelectorAll('.base-card').forEach(c=>c.onclick=()=>showList(c.dataset.base));
+  }catch(e){showError('Не удалось загрузить базы');}
+}
+function plural(n){const a=Math.abs(n)%100,b=a%10;if(a>10&&a<20)return'позиций';if(b>1&&b<5)return'позиции';if(b===1)return'позиция';return'позиций';}
+
+/* список позиций */
+async function showList(base){
+  loading('Загружаю позиции…');
+  try{
+    const r=await fetch(api('/list?base='+encodeURIComponent(base)));const d=await r.json();
+    let html=`<div class="crumb"><button id="toBases">← Базы</button><span>/</span> ${d.label} (${base})</div>`;
+    if(!d.items.length){html+=`<div class="state">В этой базе пока нет позиций</div>`;}
+    else{
+      html+=`<div class="pos-list">`;
+      for(const it of d.items){
+        const cover=(it.processed&&it.processed[0])||(it.original&&it.original[0]);
+        html+=`<div class="pos" data-id="${it.id}">
+          <div class="pv">${cover?`<img loading="lazy" src="${fileUrl(cover)}">`:''}</div>
+          <div class="info">
+            <div class="id">${it.id}</div>
+            <div class="dsc">${esc(it.description)||'<span style="opacity:.5">без описания</span>'}</div>
+            <div class="tags">
+              <span class="tag g">${(it.processed||[]).length} обраб.</span>
+              <span class="tag">${(it.original||[]).length} ориг.</span>
+            </div>
+          </div>
+        </div>`;
+      }
+      html+=`</div>`;
+    }
+    content.innerHTML=html;
+    $('toBases').onclick=showBases;
+    content.querySelectorAll('.pos').forEach(p=>p.onclick=()=>showItem(p.dataset.id,base));
+  }catch(e){showError('Не удалось загрузить позиции');}
+}
+
+/* детали позиции */
+async function showItem(id,base){
+  loading('Загружаю позицию…');
+  try{
+    const r=await fetch(api('/item?id='+encodeURIComponent(id)));const it=await r.json();
+    let html=`<div class="crumb"><button id="toBases">← Базы</button><span>/</span><button id="toList">${it.base}</button><span>/</span> ${it.id}</div>`;
+    html+=`<div class="detail"><h2>${it.id}</h2>`;
+    if(it.description)html+=`<div class="desc">${esc(it.description)}</div>`;
+    if(it.processed&&it.processed.length){
+      html+=`<div class="sect-h">Обработанные · ${it.processed.length}</div><div class="gal">`;
+      it.processed.forEach((k,i)=>html+=galCell(k,`${it.id}_обработ_${i+1}`));
+      html+=`</div>`;
+    }
+    if(it.original&&it.original.length){
+      html+=`<div class="sect-h">Оригиналы · ${it.original.length}</div><div class="gal">`;
+      it.original.forEach((k,i)=>html+=galCell(k,`${it.id}_ориг_${i+1}`));
+      html+=`</div>`;
+    }
+    html+=`</div>`;content.innerHTML=html;
+    $('toBases').onclick=showBases;$('toList').onclick=()=>showList(base);
+  }catch(e){showError('Не удалось загрузить позицию');}
+}
+function galCell(key,name){
+  return `<a href="${fileUrl(key)}" download="${name}.jpg" target="_blank"><img loading="lazy" src="${fileUrl(key)}"><span class="dl">скачать</span></a>`;
+}
+function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+</script>
+</body>
+</html>
