@@ -89,6 +89,28 @@ h1{font-family:"Archivo",sans-serif;font-weight:800;font-size:clamp(28px,7vw,40p
 @keyframes spin{to{transform:rotate(360deg)}}
 .foot{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--mut);text-align:center;margin-top:30px}
 .hidden{display:none}
+/* h2 ряд + редактирование */
+.h2row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.icon-btn{font-family:"Inter";font-size:15px;border:1px solid var(--line-s);background:var(--card);color:var(--ink-d);width:34px;height:34px;border-radius:9px;cursor:pointer;transition:.15s;flex:none}
+.icon-btn:hover{border-color:var(--gold);color:var(--gold-d)}
+.btn.small{padding:7px 12px;font-size:12px}
+.btn.danger{border-color:color-mix(in srgb,var(--red) 50%,var(--line-s));color:var(--red)}
+.btn.danger:hover{background:color-mix(in srgb,var(--red) 10%,var(--card));border-color:var(--red)}
+.desc-wrap{display:flex;gap:10px;align-items:flex-start;margin:14px 0}
+.desc-wrap .desc{flex:1;margin:0}
+.gal-cell{position:relative}
+.gal-del{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:15px;line-height:1;cursor:pointer;z-index:2;display:grid;place-items:center}
+.gal-del:hover{background:var(--red)}
+.manage{display:flex;flex-direction:column;gap:8px;margin-top:24px;padding-top:18px;border-top:1px solid var(--line-s)}
+.manage .btn{width:100%}
+/* редактор */
+.ed-back{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:70;padding:18px}
+.ed{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line-s);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+.ed h4{font-family:"Archivo";font-weight:700;font-size:17px;margin:0 0 12px}
+.ed input,.ed textarea{width:100%;font-family:"Inter";font-size:14px;padding:12px;border-radius:11px;border:1.5px solid var(--line-s);background:var(--card2);color:var(--ink);outline:none;resize:vertical}
+.ed input:focus,.ed textarea:focus{border-color:var(--gold)}
+.ed-btns{display:flex;gap:10px;margin-top:14px}
+.ed-btns .btn{flex:1}
 @media(max-width:480px){.bases{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -119,7 +141,7 @@ h1{font-family:"Archivo",sans-serif;font-weight:800;font-size:clamp(28px,7vw,40p
   <!-- КОНТЕНТ -->
   <div id="content" class="hidden"></div>
 
-  <p class="foot">resale studio · каталог v1</p>
+  <p class="foot">resale studio · каталог v2 · редактирование</p>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -223,30 +245,52 @@ async function showItem(id,base){
   loading('Загружаю позицию…');
   try{
     const r=await fetch(api('/item?id='+encodeURIComponent(id)));const it=await r.json();
+    window._cur=it; // текущая позиция для редактирования
     let html=`<div class="crumb"><button id="toBases">← Базы</button><span>/</span><button id="toList">${it.base}</button><span>/</span> ${it.id}</div>`;
-    html+=`<div class="detail"><h2>${it.id}</h2>`;
-    // кнопки скачивания всей позиции
-    html+=`<div class="dl-row">
-      <button class="btn primary" id="zipAll">⤓ Скачать всё архивом</button>`;
-    if(it.processed&&it.processed.length)html+=`<button class="btn" id="zipProc">архив обработанных</button>`;
-    if(it.original&&it.original.length)html+=`<button class="btn" id="zipOrig">архив оригиналов</button>`;
+    html+=`<div class="detail"><div class="h2row"><h2>${it.id}</h2><button class="icon-btn" id="renameBtn" title="Переименовать">✎</button></div>`;
+    const hasProc=it.processed&&it.processed.length, hasOrig=it.original&&it.original.length;
+    html+=`<div class="dl-row"><button class="btn primary" id="zipAll">⤓ Скачать всё архивом</button>`;
+    // отдельные кнопки только если есть ОБА типа
+    if(hasProc&&hasOrig){
+      html+=`<button class="btn" id="zipProc">только обработанные</button>`;
+      html+=`<button class="btn" id="zipOrig">только оригиналы</button>`;
+    }
     html+=`</div>`;
-    if(it.description)html+=`<div class="desc">${esc(it.description)}</div>`;
-    else html+=`<div class="desc no-desc-box">⚠ Нет описания у этой позиции</div>`;
+    // описание + кнопка редактировать
+    if(it.description)html+=`<div class="desc-wrap"><div class="desc">${esc(it.description)}</div><button class="icon-btn" id="editDesc" title="Изменить">✎</button></div>`;
+    else html+=`<div class="desc-wrap"><div class="desc no-desc-box">⚠ Нет описания</div><button class="btn small" id="editDesc">+ добавить описание</button></div>`;
     if(it.processed&&it.processed.length){
       html+=`<div class="sect-h">Обработанные · ${it.processed.length}</div><div class="gal">`;
-      it.processed.forEach((k,i)=>html+=galCell(k,`${it.id}_обработ_${i+1}`));
+      it.processed.forEach((k,i)=>html+=galCell(k,`${it.id}_обработ_${i+1}`,it.id,'processed',i));
       html+=`</div>`;
     }
     if(it.original&&it.original.length){
       html+=`<div class="sect-h">Оригиналы · ${it.original.length}</div><div class="gal">`;
-      it.original.forEach((k,i)=>html+=galCell(k,`${it.id}_ориг_${i+1}`));
+      it.original.forEach((k,i)=>html+=galCell(k,`${it.id}_ориг_${i+1}`,it.id,'original',i));
       html+=`</div>`;
     }
+    // добавить фото + удалить позицию
+    html+=`<div class="manage">
+      <input type="file" id="addPhotos" accept="image/*,.heic,.heif" multiple hidden>
+      <button class="btn" id="addProc">+ добавить обработанные</button>
+      <button class="btn" id="addOrig">+ добавить оригиналы</button>
+      <button class="btn danger" id="delPos">🗑 Удалить позицию целиком</button>
+    </div>`;
     html+=`</div>`;content.innerHTML=html;
     $('toBases').onclick=showBases;$('toList').onclick=()=>showList(base);
     const dlBtn=(elid,which)=>{const el=$(elid);if(el)el.onclick=()=>downloadZip(it,which);};
     dlBtn('zipAll','all');dlBtn('zipProc','processed');dlBtn('zipOrig','original');
+    // редактирование
+    $('editDesc').onclick=()=>editDescription(it,base);
+    $('renameBtn').onclick=()=>renamePosition(it,base);
+    $('delPos').onclick=()=>deletePosition(it,base);
+    // удаление отдельных фото
+    content.querySelectorAll('.gal-del').forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();deletePhoto(it,base,b.dataset.kind,+b.dataset.idx);});
+    // добавление фото
+    const fileInp=$('addPhotos');let addKind='processed';
+    $('addProc').onclick=()=>{addKind='processed';fileInp.click();};
+    $('addOrig').onclick=()=>{addKind='original';fileInp.click();};
+    fileInp.onchange=()=>addPhotos(it,base,addKind,fileInp.files);
   }catch(e){showError('Не удалось загрузить позицию');}
 }
 
@@ -271,10 +315,84 @@ async function downloadZip(it,which){
   }catch(e){alert('Ошибка архива: '+(e.message||e));}
   if(btn){btn.textContent=old;btn.disabled=false;}
 }
-function galCell(key,name){
-  return `<a href="${fileUrl(key)}" download="${name}.jpg" target="_blank"><img loading="lazy" src="${fileUrl(key)}"><span class="dl">скачать</span></a>`;
+function galCell(key,name,id,kind,idx){
+  return `<div class="gal-cell">
+    <a href="${fileUrl(key)}" download="${name}.jpg" target="_blank"><img loading="lazy" src="${fileUrl(key)}"><span class="dl">скачать</span></a>
+    <button class="gal-del" data-kind="${kind}" data-idx="${idx}" title="Удалить фото">×</button>
+  </div>`;
 }
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+/* ─── редактирование ─── */
+async function apiPost(path,body){
+  const r=await fetch(`${API.replace(/\/$/,'')}${path}`,{method:'POST',headers:{'Content-Type':'application/json','X-Token':TOKEN},body:JSON.stringify(body)});
+  if(r.status===401)throw new Error('Нет доступа');
+  if(!r.ok)throw new Error((await r.json()).error||'Ошибка');
+  return r.json();
+}
+
+function editDescription(it,base){
+  openEditor('Описание позиции '+it.id, it.description||'', async(val)=>{
+    await apiPost('/edit',{id:it.id,description:val});
+    showItem(it.id,base);
+  }, true);
+}
+function renamePosition(it,base){
+  openEditor('Новый номер позиции (буква базы + номер)', it.id, async(val)=>{
+    const clean=(val||'').trim();
+    const res=await apiPost('/rename',{id:it.id,newId:clean});
+    showItem(res.id||clean, res.base||base);
+  }, false);
+}
+async function deletePhoto(it,base,kind,idx){
+  if(!confirm('Удалить это фото?'))return;
+  try{await apiPost('/delphoto',{id:it.id,kind,idx});showItem(it.id,base);}
+  catch(e){alert(e.message||e);}
+}
+async function deletePosition(it,base){
+  if(!confirm(`Удалить позицию ${it.id} целиком, со всеми фото? Это нельзя отменить.`))return;
+  try{await apiPost('/delete',{id:it.id});showList(base);}
+  catch(e){alert(e.message||e);}
+}
+async function addPhotos(it,base,kind,files){
+  if(!files||!files.length)return;
+  const fd=new FormData();
+  fd.append('position',it.id);fd.append('kind',kind);fd.append('description',it.description||'');
+  let heic=null;
+  for(const f of files){
+    let blob=f;const n=(f.name||'').toLowerCase();
+    if(f.type==='image/heic'||f.type==='image/heif'||n.endsWith('.heic')||n.endsWith('.heif')){
+      if(!heic){try{heic=await import('https://cdn.jsdelivr.net/npm/heic-to@1.1.14/+esm');}catch(e){heic='fail';}}
+      if(heic&&heic!=='fail'){try{blob=await heic.heicTo({blob:f,type:'image/jpeg',quality:0.92});}catch(e){}}
+    }
+    fd.append('photos',blob,f.name||'photo.jpg');
+  }
+  content.querySelector('.manage').innerHTML='<div class="state">Загружаю фото…</div>';
+  try{
+    const r=await fetch(`${API.replace(/\/$/,'')}/upload`,{method:'POST',headers:{'X-Token':TOKEN},body:fd});
+    if(!r.ok)throw new Error('Ошибка загрузки');
+    showItem(it.id,base);
+  }catch(e){alert(e.message||e);showItem(it.id,base);}
+}
+
+/* универсальный редактор (текст/textarea) */
+function openEditor(title,value,onSave,multiline){
+  const back=document.createElement('div');back.className='ed-back';
+  back.innerHTML=`<div class="ed">
+    <h4>${title}</h4>
+    ${multiline?`<textarea id="edVal" rows="6">${esc(value)}</textarea>`:`<input type="text" id="edVal" value="${esc(value)}">`}
+    <div class="ed-btns"><button class="btn" id="edCancel">Отмена</button><button class="btn primary" id="edSave">Сохранить</button></div>
+  </div>`;
+  document.body.appendChild(back);
+  const val=back.querySelector('#edVal');setTimeout(()=>val.focus(),50);
+  const close=()=>back.remove();
+  back.querySelector('#edCancel').onclick=close;
+  back.onclick=e=>{if(e.target===back)close();};
+  back.querySelector('#edSave').onclick=async()=>{
+    const v=val.value;back.querySelector('#edSave').textContent='Сохраняю…';back.querySelector('#edSave').disabled=true;
+    try{await onSave(v);close();}catch(e){alert(e.message||e);back.querySelector('#edSave').textContent='Сохранить';back.querySelector('#edSave').disabled=false;}
+  };
+}
 </script>
 </body>
 </html>
