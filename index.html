@@ -73,6 +73,11 @@ h1{font-family:"Archivo",sans-serif;font-weight:800;font-size:clamp(28px,7vw,40p
 /* детали позиции */
 .detail h2{font-family:"Archivo";font-weight:800;font-size:26px;margin:0 0 4px}
 .detail .desc{background:var(--card);border:1px solid var(--line-s);border-radius:12px;padding:14px;font-size:14px;color:var(--ink-d);white-space:pre-wrap;margin:14px 0;line-height:1.55}
+.no-desc{color:var(--red);font-weight:500}
+.no-desc-box{background:color-mix(in srgb,var(--red) 10%,var(--card));border-color:color-mix(in srgb,var(--red) 40%,var(--line-s));color:var(--red)}
+.dl-row{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+.dl-row .btn{flex:none}
+.dl-row .btn.primary{width:auto}
 .sect-h{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:18px 0 10px;display:flex;align-items:center;gap:8px}
 .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
 .gal a{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--line-s);aspect-ratio:1;display:block;background:var(--card2)}
@@ -117,6 +122,7 @@ h1{font-family:"Archivo",sans-serif;font-weight:800;font-size:clamp(28px,7vw,40p
   <p class="foot">resale studio · каталог v1</p>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script type="module">
 const $=id=>document.getElementById(id);
 const store={get:k=>{try{return localStorage.getItem('cat_'+k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem('cat_'+k,v)}catch(e){}}};
@@ -196,7 +202,7 @@ async function showList(base){
           <div class="pv">${cover?`<img loading="lazy" src="${fileUrl(cover)}">`:''}</div>
           <div class="info">
             <div class="id">${it.id}</div>
-            <div class="dsc">${esc(it.description)||'<span style="opacity:.5">без описания</span>'}</div>
+            <div class="dsc">${esc(it.description)||'<span class="no-desc">⚠ нет описания</span>'}</div>
             <div class="tags">
               <span class="tag g">${(it.processed||[]).length} обраб.</span>
               <span class="tag">${(it.original||[]).length} ориг.</span>
@@ -219,7 +225,14 @@ async function showItem(id,base){
     const r=await fetch(api('/item?id='+encodeURIComponent(id)));const it=await r.json();
     let html=`<div class="crumb"><button id="toBases">← Базы</button><span>/</span><button id="toList">${it.base}</button><span>/</span> ${it.id}</div>`;
     html+=`<div class="detail"><h2>${it.id}</h2>`;
+    // кнопки скачивания всей позиции
+    html+=`<div class="dl-row">
+      <button class="btn primary" id="zipAll">⤓ Скачать всё архивом</button>`;
+    if(it.processed&&it.processed.length)html+=`<button class="btn" id="zipProc">архив обработанных</button>`;
+    if(it.original&&it.original.length)html+=`<button class="btn" id="zipOrig">архив оригиналов</button>`;
+    html+=`</div>`;
     if(it.description)html+=`<div class="desc">${esc(it.description)}</div>`;
+    else html+=`<div class="desc no-desc-box">⚠ Нет описания у этой позиции</div>`;
     if(it.processed&&it.processed.length){
       html+=`<div class="sect-h">Обработанные · ${it.processed.length}</div><div class="gal">`;
       it.processed.forEach((k,i)=>html+=galCell(k,`${it.id}_обработ_${i+1}`));
@@ -232,7 +245,31 @@ async function showItem(id,base){
     }
     html+=`</div>`;content.innerHTML=html;
     $('toBases').onclick=showBases;$('toList').onclick=()=>showList(base);
+    const dlBtn=(elid,which)=>{const el=$(elid);if(el)el.onclick=()=>downloadZip(it,which);};
+    dlBtn('zipAll','all');dlBtn('zipProc','processed');dlBtn('zipOrig','original');
   }catch(e){showError('Не удалось загрузить позицию');}
+}
+
+// скачать позицию архивом
+async function downloadZip(it,which){
+  const btn=$(which==='all'?'zipAll':which==='processed'?'zipProc':'zipOrig');
+  const old=btn?btn.textContent:'';if(btn){btn.textContent='Собираю…';btn.disabled=true;}
+  try{
+    const zip=new JSZip();
+    const keys=[];
+    if(which==='all'||which==='processed')(it.processed||[]).forEach((k,i)=>keys.push([k,`${it.id}_обработ_${i+1}.jpg`]));
+    if(which==='all'||which==='original')(it.original||[]).forEach((k,i)=>keys.push([k,`${it.id}_ориг_${i+1}.jpg`]));
+    let done=0;
+    for(const [key,name] of keys){
+      const resp=await fetch(fileUrl(key));const blob=await resp.blob();
+      zip.file(name,blob);done++;
+      if(btn)btn.textContent=`Собираю ${done}/${keys.length}…`;
+    }
+    if(it.description)zip.file('описание.txt',`Позиция: ${it.id}\n\n${it.description}`);
+    const out=await zip.generateAsync({type:'blob'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(out);a.download=`${it.id}.zip`;a.click();
+  }catch(e){alert('Ошибка архива: '+(e.message||e));}
+  if(btn){btn.textContent=old;btn.disabled=false;}
 }
 function galCell(key,name){
   return `<a href="${fileUrl(key)}" download="${name}.jpg" target="_blank"><img loading="lazy" src="${fileUrl(key)}"><span class="dl">скачать</span></a>`;
